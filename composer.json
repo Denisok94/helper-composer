@@ -1,0 +1,23 @@
+{
+    "name": "denisok94/helper-composer",
+    "type": "composer-plugin",
+    "require": {
+        "composer-plugin-api": "^1.0 | ^2.0"
+    },
+    "require-dev": {
+        "composer/composer": "^1.0 | ^2.0@dev",
+        "phpunit/phpunit": "<7"
+    },
+    "autoload": {
+        "psr-4": {
+            "denisok94\\helper\\composer\\": "src"
+        }
+    },
+    "version": "0.0.1",
+    "extra": {
+        "class": "denisok94\\helper\\composer\\Plugin",
+        "branch-alias": {
+          "dev-master": "0.0.1-dev"
+        }
+    }
+}
