@@ -3,7 +3,6 @@
 namespace denisok94\helper\composer;
 
 use Composer\Composer;
-use Composer\Script;
 use Composer\IO\IOInterface;
 use Composer\Script\Event;
 use Composer\Script\ScriptEvents;
@@ -55,7 +54,6 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     {
         return [
             PackageEvents::POST_PACKAGE_UPDATE => 'checkPackageUpdates',
-            // PackageEvents::POST_PACKAGE_INSTALL => 'showInstallNotes', 
             ScriptEvents::POST_UPDATE_CMD => 'showUpgradeNotes',
         ];
     }
@@ -101,22 +99,6 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     }
 
     /**
-     * Listen to POST_PACKAGE_INSTALL event and take note of the package updates.
-     * @param PackageEvent $event
-     */
-    public function showInstallNotes(PackageEvent $event)
-    {
-        $io = $event->getIO();
-        $packageName = 'denisok94/helper-composer';
-        $upgradeFile = $this->_vendorDir . '/' . $packageName . '/INSTALL.md';
-        if (!is_file($upgradeFile) || !is_readable($upgradeFile)) {
-            return false;
-        }
-        $notes =  preg_split('~\R~', file_get_contents($upgradeFile));
-        $io->write("\n " . trim(implode("\n ", $notes)));
-    }
-
-    /**
      * Listen to POST_UPDATE_CMD event to display information about upgrade notes if appropriate.
      * @param Event $event
      */
@@ -137,19 +119,17 @@ class Plugin implements PluginInterface, EventSubscriberInterface
 
         $io = $event->getIO();
 
+        $this->printUpgradeIntro($io, $package);
+
         // print the relevant upgrade notes for the upgrade
         // - only on upgrade, not on downgrade
         // - only if the "from" version is non-dev, otherwise we have no idea which notes to show
         if ($package['direction'] === 'up' && $this->isNumericVersion($package['fromPretty'])) {
-
             $notes = $this->findUpgradeNotes($packageName, $package['fromPretty']);
             if ($notes !== false && empty($notes)) {
                 // no relevent upgrade notes, do not show anything.
                 return;
             }
-
-            $this->printUpgradeIntro($io, $package);
-
             if ($notes) {
                 // safety check: do not display notes if they are too many
                 if (count($notes) > 250) {
@@ -158,8 +138,6 @@ class Plugin implements PluginInterface, EventSubscriberInterface
                     $io->write("\n " . trim(implode("\n ", $notes)));
                 }
             }
-        } else {
-            $this->printUpgradeIntro($io, $package);
         }
         $io->write("\n You can find the upgrade notes for all versions online at:");
         $this->printUpgradeLink($io, $package);
@@ -172,7 +150,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      */
     private function printUpgradeLink($io, $package)
     {
-        $maxVersion = $package['direction'] === 'up' ? $package['toPretty'] : $package['fromPretty'];
+        $maxVersion = $package['toPretty'];
         // make sure to always show a valid link, even if $maxVersion is something like dev-master
         if (!$this->isNumericVersion($maxVersion)) {
             $maxVersion = 'main';
@@ -194,7 +172,6 @@ class Plugin implements PluginInterface, EventSubscriberInterface
                 . $package['fromPretty'] . ' to ' . $package['toPretty'] . '.</>'
         );
         $io->write("\n <options=bold>Please check the upgrade notes for possible incompatible changes\n and adjust your application code accordingly.");
-        $io->write("\n Пожалуйста, ознакомьтесь с примечаниями к обновлению на предмет возможных несовместимых изменений\n и соответствующим образом измените код приложения.</>");
     }
 
     /**
@@ -225,7 +202,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
                 if ($matches[1] === $fromVersion) {
                     $foundExactMatch = true;
                 }
-                if (version_compare($matches[1], $fromVersion, '<') && ($foundExactMatch || version_compare($matches[1], $fromVersionMajor, '<'))) {
+                if (version_compare($matches[1], $fromVersion, '=') && ($foundExactMatch || version_compare($matches[1], $fromVersionMajor, '='))) {
                     break;
                 }
                 $consuming = true;
