@@ -13,11 +13,11 @@
             "denisok94\\helper\\composer\\": "src"
         }
     },
-    "version": "0.0.1",
+    "version": "0.0.2",
     "extra": {
         "class": "denisok94\\helper\\composer\\Plugin",
         "branch-alias": {
-          "dev-master": "0.0.1-dev"
+          "dev-master": "0.0.x-dev"
         }
     }
 }
