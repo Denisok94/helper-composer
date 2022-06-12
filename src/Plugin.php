@@ -240,7 +240,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
                 if ($matches[1] === $fromVersion) {
                     $foundExactMatch = true;
                 }
-                if (version_compare($matches[1], $fromVersion, '=') && ($foundExactMatch || version_compare($matches[1], $fromVersionMajor, '='))) {
+                if (version_compare($matches[1], $fromVersion, '<=') && ($foundExactMatch || version_compare($matches[1], $fromVersionMajor, '<='))) {
                     break;
                 }
                 $consuming = true;
