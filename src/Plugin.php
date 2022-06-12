@@ -16,9 +16,19 @@ use Composer\DependencyResolver\Operation\UpdateOperation;
 class Plugin implements PluginInterface, EventSubscriberInterface
 {
     /**
+     * @var array
+     */
+    private $packageNames = [
+        'denisok94/helper',
+        'denisok94/yii-metatag',
+        'denisok94/yii-helper'
+    ];
+
+    /**
      * @var array noted package updates.
      */
     private $_packageUpdates = [];
+
     /**
      * @var string path to the vendor directory.
      */
@@ -54,6 +64,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     {
         return [
             PackageEvents::POST_PACKAGE_UPDATE => 'checkPackageUpdates',
+            // PackageEvents::POST_PACKAGE_INSTALL => 'showInstallNotes', 
             ScriptEvents::POST_UPDATE_CMD => 'showUpgradeNotes',
         ];
     }
@@ -97,6 +108,22 @@ class Plugin implements PluginInterface, EventSubscriberInterface
             '<'
         );
     }
+    
+    /**
+     * Listen to POST_PACKAGE_INSTALL event and take note of the package updates.
+     * @param PackageEvent $event
+     */
+    public function showInstallNotes(PackageEvent $event)
+    {
+        // $io = $event->getIO();
+        // $packageName = 'denisok94/helper-composer';
+        // $upgradeFile = $this->_vendorDir . '/' . $packageName . '/INSTALL.md';
+        // if (!is_file($upgradeFile) || !is_readable($upgradeFile)) {
+        //     return false;
+        // }
+        // $notes =  preg_split('~\R~', file_get_contents($upgradeFile));
+        // $io->write("\n " . trim(implode("\n ", $notes)));
+    }
 
     /**
      * Listen to POST_UPDATE_CMD event to display information about upgrade notes if appropriate.
@@ -104,11 +131,20 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      */
     public function showUpgradeNotes(Event $event)
     {
-        $packageName = 'denisok94/helper';
-        if (!isset($this->_packageUpdates[$packageName])) {
-            return;
+        foreach ($this->packageNames as $packageName) {
+            if (isset($this->_packageUpdates[$packageName])) {
+                $this->getNotes($event, $packageName);
+            }
         }
+        return;
+    }
 
+    /**
+     * @param Event $event
+     * @param string $packageName
+     */
+    public function getNotes(Event $event, string $packageName)
+    {
         $package = $this->_packageUpdates[$packageName];
 
         // do not show a notice on up/downgrades between dev versions
@@ -119,7 +155,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
 
         $io = $event->getIO();
 
-        $this->printUpgradeIntro($io, $package);
+        $this->printUpgradeIntro($io, $package, $packageName);
 
         // print the relevant upgrade notes for the upgrade
         // - only on upgrade, not on downgrade
@@ -140,35 +176,37 @@ class Plugin implements PluginInterface, EventSubscriberInterface
             }
         }
         $io->write("\n You can find the upgrade notes for all versions online at:");
-        $this->printUpgradeLink($io, $package);
+        $this->printUpgradeLink($io, $package, $packageName);
     }
 
     /**
      * Print link to upgrade notes
      * @param IOInterface $io
      * @param array $package
+     * @param string $packageName
      */
-    private function printUpgradeLink($io, $package)
+    private function printUpgradeLink(IOInterface $io, array $package, string $packageName)
     {
         $maxVersion = $package['toPretty'];
         // make sure to always show a valid link, even if $maxVersion is something like dev-master
         if (!$this->isNumericVersion($maxVersion)) {
             $maxVersion = 'main';
         }
-        $io->write(" https://github.com/Denisok94/helper/blob/$maxVersion/UPGRADE.md\n");
+        $io->write(" https://github.com/Denisok94/" . explode('/', $packageName)[1] . "/blob/$maxVersion/UPGRADE.md");
     }
 
     /**
      * Print upgrade intro
      * @param IOInterface $io
      * @param array $package
+     * @param string $packageName
      */
-    private function printUpgradeIntro($io, $package)
+    private function printUpgradeIntro(IOInterface $io, array $package, string $packageName)
     {
         $io->write(
             "\n <fg=yellow;options=bold>Seems you have "
                 . ($package['direction'] === 'up' ? 'upgraded' : 'downgraded')
-                . ' denisok94/helper from version '
+                . " $packageName from version "
                 . $package['fromPretty'] . ' to ' . $package['toPretty'] . '.</>'
         );
         $io->write("\n <options=bold>Please check the upgrade notes for possible incompatible changes\n and adjust your application code accordingly.");
@@ -180,7 +218,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      * @param string $fromVersion until which version to read the notes
      * @return array|false
      */
-    private function findUpgradeNotes($packageName, $fromVersion)
+    private function findUpgradeNotes(string $packageName, string $fromVersion)
     {
         if (preg_match('/^([0-9]\.[0-9]+\.?[0-9]*)/', $fromVersion, $m)) {
             $fromVersionMajor = $m[1];
@@ -219,7 +257,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
      * @param string $version
      * @return bool
      */
-    private function isNumericVersion($version)
+    private function isNumericVersion(string $version)
     {
         return (bool) preg_match('~^([0-9]\.[0-9]+\.?[0-9\.]*)~', $version);
     }
