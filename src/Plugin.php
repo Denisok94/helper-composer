@@ -108,7 +108,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
             '<'
         );
     }
-    
+
     /**
      * Listen to POST_PACKAGE_INSTALL event and take note of the package updates.
      * @param PackageEvent $event
@@ -155,17 +155,16 @@ class Plugin implements PluginInterface, EventSubscriberInterface
 
         $io = $event->getIO();
 
-        $this->printUpgradeIntro($io, $package, $packageName);
-
         // print the relevant upgrade notes for the upgrade
         // - only on upgrade, not on downgrade
         // - only if the "from" version is non-dev, otherwise we have no idea which notes to show
         if ($package['direction'] === 'up' && $this->isNumericVersion($package['fromPretty'])) {
             $notes = $this->findUpgradeNotes($packageName, $package['fromPretty']);
             if ($notes !== false && empty($notes)) {
-                // no relevent upgrade notes, do not show anything.
+                // no relevant upgrade notes, do not show anything.
                 return;
             }
+            $this->printUpgradeIntro($io, $package, $packageName);
             if ($notes) {
                 // safety check: do not display notes if they are too many
                 if (count($notes) > 250) {
@@ -174,9 +173,9 @@ class Plugin implements PluginInterface, EventSubscriberInterface
                     $io->write("\n " . trim(implode("\n ", $notes)));
                 }
             }
+            $io->write("\n You can find the upgrade notes for all versions online at:");
+            $this->printUpgradeLink($io, $package, $packageName);
         }
-        $io->write("\n You can find the upgrade notes for all versions online at:");
-        $this->printUpgradeLink($io, $package, $packageName);
     }
 
     /**
