@@ -21,7 +21,8 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     private $packageNames = [
         'denisok94/helper',
         'denisok94/yii-metatag',
-        'denisok94/yii-helper'
+        'denisok94/yii-helper',
+        'denisok94/symfony-helper'
     ];
 
     /**
