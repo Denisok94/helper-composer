@@ -22,6 +22,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         'denisok94/helper',
         'denisok94/yii-metatag',
         'denisok94/yii-helper',
+        'denisok94/yii2-widgets',
         'denisok94/symfony-helper',
         'denisok94/symfony-export-xlsx'
     ];
