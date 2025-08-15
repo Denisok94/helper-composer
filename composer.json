@@ -2,7 +2,7 @@
     "name": "denisok94/helper-composer",
     "type": "composer-plugin",
     "license": "MIT",
-    "version": "0.0.9",
+    "version": "0.0.10",
     "require": {
         "composer-plugin-api": "^1.0 | ^2.0"
     },
